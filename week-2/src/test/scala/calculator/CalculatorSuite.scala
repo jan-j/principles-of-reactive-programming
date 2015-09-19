@@ -33,7 +33,6 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     assert(result() == MaxTweetLength - tweetLength("foo blabla \uD83D\uDCA9 bar"))
   }
 
-
   test("colorForRemainingCharsCount with a constant signal") {
     val resultGreen1 = TweetLength.colorForRemainingCharsCount(Var(52))
     assert(resultGreen1() == "green")
@@ -51,4 +50,30 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     assert(resultRed2() == "red")
   }
 
+  /******************
+    ** POLYNOMIAL **
+    ******************/
+
+  test("Polynomial tests") {
+    val a = Var(1.0)
+    val b = Var(6.0)
+    val c = Var(9.0)
+    val delta = Polynomial.computeDelta(a, b, c)
+    val solutions = Polynomial.computeSolutions(a, b, c, delta)
+
+    assert(delta() === 0.0)
+    assert(solutions() === Set(-3.0))
+
+    a.update(2)
+    assert(delta() === -36.0)
+    assert(solutions() === Set())
+
+    b.update(9)
+    assert(delta() === 9.0)
+    assert(solutions() === Set(-3.0, -1.5))
+
+    c.update(-5)
+    assert(delta() === 121.0)
+    assert(solutions() === Set(-5.0, 0.5))
+  }
 }
