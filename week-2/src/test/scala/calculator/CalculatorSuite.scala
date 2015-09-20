@@ -76,4 +76,48 @@ class CalculatorSuite extends FunSuite with ShouldMatchers {
     assert(delta() === 121.0)
     assert(solutions() === Set(-5.0, 0.5))
   }
+
+  /******************
+    ** CALCULATOR **
+    ******************/
+
+  val variables = Map[String, Signal[Expr]](
+    "a" -> Signal(Literal(1)),
+    "b" -> Signal(Plus(Literal(1), Literal(2))),
+    "c" -> Signal(Minus(Literal(1), Literal(2))),
+    "d" -> Signal(Times(Literal(1), Literal(2))),
+    "e" -> Signal(Divide(Literal(1), Literal(2))),
+    "f" -> Signal(Plus(Plus(Literal(1), Literal(2)), Literal(3))),
+    "g" -> Signal(Plus(Ref("a"), Ref("b"))),
+    "h" -> Signal(Ref("i")),
+    "i" -> Signal(Ref("h")),
+    "j" -> Signal(Ref("j")),
+    "k" -> Signal(Ref("z"))
+  )
+
+  val values = Calculator.computeValues(variables)
+
+  test("Calculator literals expressions test") {
+    assert(values("a")() === 1.0)
+    assert(values("b")() === 3.0)
+    assert(values("c")() === -1.0)
+    assert(values("d")() === 2.0)
+    assert(values("e")() === 0.5)
+    assert(values("f")() === 6.0)
+  }
+
+  test("Calculator valid reference expressions test") {
+    assert(values("g")() === 4.0)
+  }
+
+  test("Calculator invalid reference expressions test") {
+    println()
+    assert(values("h")().isNaN)
+    assert(values("i")().isNaN)
+    assert(values("j")().isNaN)
+  }
+
+  test("Calculator unknown reference test") {
+    assert(values("k")().isNaN)
+  }
 }
