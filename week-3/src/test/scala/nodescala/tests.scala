@@ -1,5 +1,7 @@
 package nodescala
 
+import java.util.NoSuchElementException
+
 import scala.language.postfixOps
 import scala.util.{Try, Success, Failure}
 import scala.collection._
@@ -30,8 +32,61 @@ class NodeScalaSuite extends FunSuite {
       case t: TimeoutException => // ok!
     }
   }
+  test("Future.all should complete with list of values") {
+    val successAll = Future.all(List(Future.always(1), Future.always(2)))
+    assert(Await.result(successAll, 1 second) == List(1, 2))
+  }
+  test("Future.all should never be completed") {
+    val failedAll = Future.all(List(Future.always(1), Future.never))
+    try {
+      Await.result(failedAll, 1 second)
+      assert(false)
+    } catch {
+      case t: TimeoutException => // ok!
+    }
+  }
+  test("Future.any should complete with first value") {
+    val successAny = Future.any(List(Future.always(1), Future.never))
+    assert(Await.result(successAny, 1 second) == 1)
+  }
+  test("Future.any should never be completed") {
+    val failedAny = Future.any(List(Future.never, Future.always(1)))
+    try {
+      Await.result(failedAny, 1 second)
+      assert(false)
+    } catch {
+      case t: TimeoutException => // ok!
+    }
+  }
 
-  
+  test("Future.always(x).now should return value") {
+    assert(Future.always(1).now === 1)
+  }
+  test("Future.never.now should throw exception") {
+    try {
+      Future.never.now
+      assert(false)
+    } catch {
+      case t: NoSuchElementException => // ok!
+    }
+  }
+  test("Future.delay(1 second).now should throw exception") {
+    try {
+      Future.delay(1 second).now
+      assert(false)
+    } catch {
+      case t: NoSuchElementException => // ok!
+    }
+  }
+
+  test("Future.always(1).continueWith(_ + 1) should return Future(2)") {
+    val f = Future.always(1).continueWith(_.now + 1)
+    assert(Await.result(f, 1 second) === 2)
+  }
+  test("Future.always(1).continue(_ + 1) should return Future(2)") {
+    val f = Future.always(1).continue(_.getOrElse(0) + 1)
+    assert(Await.result(f, 1 second) === 2)
+  }
   
   class DummyExchange(val request: Request) extends Exchange {
     @volatile var response = ""
