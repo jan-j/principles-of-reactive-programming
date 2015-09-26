@@ -78,7 +78,7 @@ object Search {
     def page(@Query("page") term: String, callback: Callback[Page]): Unit
   }
 
-  val restAdapter = new RestAdapter.Builder().setServer("http://en.wikipedia.org").build()
+  val restAdapter = new RestAdapter.Builder().setServer("https://en.wikipedia.org").build()
 
   val service = restAdapter.create(classOf[WikipediaService])
 
