@@ -15,15 +15,7 @@ import org.scalatest.FunSuiteLike
 class BinaryTreeSuite(_system: ActorSystem) extends TestKit(_system) with FunSuiteLike with Matchers with BeforeAndAfterAll with ImplicitSender
 {
 
-  def this() = this(ActorSystem("BinaryTreeSuite", ConfigFactory.parseString( """akka {
-    loglevel = "DEBUG"
-    actor {
-      debug {
-        receive = on
-        lifecycle = off
-      }
-    }
-  }""").withFallback(ConfigFactory.load())))
+  def this() = this(ActorSystem("BinaryTreeSuite"))
 
   override def afterAll: Unit = system.shutdown()
 
@@ -92,7 +84,7 @@ class BinaryTreeSuite(_system: ActorSystem) extends TestKit(_system) with FunSui
     verify(requester, ops, expectedReplies)
   }
 
-  ignore("behave identically to built-in set (includes GC)") {
+  test("behave identically to built-in set (includes GC)") {
     val rnd = new Random()
     def randomOperations(requester: ActorRef, count: Int): Seq[Operation] = {
       def randomElement: Int = rnd.nextInt(100)
