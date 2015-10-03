@@ -54,13 +54,25 @@ class Replica(val arbiter: ActorRef, persistenceProps: Props) extends Actor {
 
   /* TODO Behavior for  the leader role. */
   val leader: Receive = {
-    case _ =>
+    case Get(key: String, id: Long) => sender ! GetResult(key, kv.get(key), id)
+    case Insert(key: String, value: String, id: Long) => {
+      kv += key -> value
+      sender ! OperationAck(id)
+    }
+    case Remove(key: String, id: Long) => {
+      kv -= key
+      sender ! OperationAck(id)
+    }
   }
 
   /* TODO Behavior for the replica role. */
   val replica: Receive = {
-    case _ =>
+    case Get(key: String, id: Long) => sender ! GetResult(key, kv.get(key), id)
   }
 
+  // register to arbiter
+  override def preStart() = {
+    arbiter ! Join
+  }
 }
 
