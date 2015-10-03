@@ -1,8 +1,6 @@
 package kvstore
 
-import akka.actor.Props
-import akka.actor.Actor
-import akka.actor.ActorRef
+import akka.actor.{ReceiveTimeout, Props, Actor, ActorRef}
 import scala.concurrent.duration._
 
 object Replicator {
@@ -36,10 +34,40 @@ class Replicator(val replica: ActorRef) extends Actor {
     ret
   }
 
-  
+  context.setReceiveTimeout(200.millis)
+
   /* TODO Behavior for the Replicator. */
   def receive: Receive = {
-    case _ =>
+    case request: Replicate => {
+      val seq = nextSeq
+      acks += seq ->(sender, request)
+      val snapshot = Snapshot(request.key, request.valueOption, seq)
+      replica ! snapshot
+      context.become(replicating(snapshot))
+    }
+  }
+
+  def replicating(snapshot: Snapshot): Receive = {
+    case Replicate(key: String, valueOption: Option[String], id: Long) => {
+      pending :+= Snapshot(key, valueOption, nextSeq)
+    }
+    case SnapshotAck(key: String, seq: Long) => {
+      acks.get(seq) match {
+        case Some((sender, request)) => {
+          sender ! Replicated(key, request.id)
+
+          if (pending.isEmpty) context.become(receive)
+          else pending match {
+            case firstPending +: ps => {
+              pending = ps
+              context.become(replicating(firstPending))
+            }
+          }
+        }
+        case None => throw new RuntimeException("Should not happen")
+      }
+    }
+    case ReceiveTimeout => replica ! snapshot
   }
 
 }
